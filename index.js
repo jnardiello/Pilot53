@@ -27,16 +27,13 @@ exports.handler = function(event, context) {
           var ip = instance.PublicIpAddress;
 
           domainNameFrom(instance, context, function(name) {
-            dnsRecordBuilder = createDnsRecord;
-            if (event.detail.state === 'stopping' || event.detail.state === 'shutting-down') {
-              dnsRecordBuilder = deleteDnsRecord;
-            }
-            route53.changeResourceRecordSets(dnsRecordBuilder(ip, name), function(err, data) {
+            dnsRecordChange = dnsRecordChangeFrom(event, ip, name);
+            route53.changeResourceRecordSets(dnsRecordChange, function(err, data) {
               if (err) {
                 context.fail(err);
                 return;
               }
-              console.log('Change DNS record: ', JSON.stringify(dnsRecordBuilder(ip, name)));
+              console.log('Change DNS record: ', JSON.stringify(dnsRecordChange));
               context.succeed('Changed DNS record');
             });
           });
@@ -53,6 +50,13 @@ function domainNameFrom(instance, context, callback) {
     }
   });
   context.fail(util.format("Unable to find tag with key 'Name' in instance '%s'", id));
+}
+
+function dnsRecordChangeFrom(event, ip, name) {
+  if (event.detail.state === 'stopping' || event.detail.state === 'shutting-down') {
+    return deleteDnsRecord(ip, name);
+  }
+  return createDnsRecord(ip, name);
 }
 
 function deleteDnsRecord(ip, name) {
