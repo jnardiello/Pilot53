@@ -5,7 +5,6 @@ AWS_REGION = '<AWS_REGION>';
 BASE_DOMAIN_NAME = '<DOMAIN_NAME>';
 HOSTED_ZONE_ID = '<HOSTED_ZONE_ID>';
 
-
 var util = require('util');
 var aws = require('aws-sdk');
 aws.config.update({accessKeyId: AWS_ACCESS_ID, secretAccessKey: AWS_ACCESS_KEY});
@@ -26,37 +25,35 @@ exports.handler = function(event, context) {
         if ((instance.InstanceId) == event.detail['instance-id']) {
           var id = instance.InstanceId;
           var ip = instance.PublicIpAddress;
-          var name;
 
-          instance.Tags.forEach(function(tag) {
-            if (tag.Key === 'Name') {
-              name = util.format('%s.%s', tag.Value, BASE_DOMAIN_NAME);
+          domainNameFrom(instance, context, function(name) {
+            dnsRecordBuilder = createDnsRecord;
+            if (event.detail.state === 'stopping' || event.detail.state === 'shutting-down') {
+              dnsRecordBuilder = deleteDnsRecord;
             }
-          });
-
-          if (!name) {
-            context.fail(util.format("Unable to find tag with key 'Name' in instance '%s'", id));
-            return;
-          }
-
-          dnsRecordBuilder = createDnsRecord;
-          if (event.detail.state === 'stopping' || event.detail.state === 'shutting-down') {
-            dnsRecordBuilder = deleteDnsRecord;
-          }
-
-          route53.changeResourceRecordSets(dnsRecordBuilder(ip, name), function(err, data) {
-            if (err) {
-              context.fail(err);
-              return;
-            }
-            console.log('Change DNS record: ', JSON.stringify(dnsRecordBuilder(ip, name)));
-            context.succeed('Changed DNS record');
+            route53.changeResourceRecordSets(dnsRecordBuilder(ip, name), function(err, data) {
+              if (err) {
+                context.fail(err);
+                return;
+              }
+              console.log('Change DNS record: ', JSON.stringify(dnsRecordBuilder(ip, name)));
+              context.succeed('Changed DNS record');
+            });
           });
         }
       });
     });
   });
 };
+
+function domainNameFrom(instance, context, callback) {
+  instance.Tags.forEach(function(tag) {
+    if (tag.Key === 'Name') {
+      return callback(util.format('%s.%s', tag.Value, BASE_DOMAIN_NAME));
+    }
+  });
+  context.fail(util.format("Unable to find tag with key 'Name' in instance '%s'", id));
+}
 
 function deleteDnsRecord(ip, name) {
   return dnsRecord('DELETE', ip, name);
