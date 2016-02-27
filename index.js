@@ -26,7 +26,7 @@ exports.handler = function(event, context) {
           var id = instance.InstanceId;
           var ip = instance.PublicIpAddress;
 
-          domainNameFrom(instance, context, function(name) {
+          domainNameFrom(instance, id, context, function(name) {
             dnsRecordChange = dnsRecordChangeFrom(event, ip, name);
             route53.changeResourceRecordSets(dnsRecordChange, function(err, data) {
               if (err) {
@@ -43,7 +43,7 @@ exports.handler = function(event, context) {
   });
 };
 
-function domainNameFrom(instance, context, callback) {
+function domainNameFrom(instance, id, context, callback) {
   instance.Tags.forEach(function(tag) {
     if (tag.Key === 'Name') {
       return callback(util.format('%s.%s', tag.Value, BASE_DOMAIN_NAME));
