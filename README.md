@@ -17,13 +17,13 @@ You create a new `EC2` instance with tag `Name: web-1`. `Pilot53` will receive a
 
 ### Expected Behaviour
 #### Create
-When creating a new instance, `Pilot53` will look for the tag `Name` and will use it to create the DNS entry. A tag called `web-1` will generate the DNS record `web-1.yourdomain.xpz`
+When creating a new instance, `Pilot53` will look for the tag `Name` and will use it to create the DNS entry. For example, creating an instance with `Name` tag called `web-1` will generate a DNS record `web-1.yourdomain.xpz`
 
 #### Delete
 As your instance gets `stopped` or `terminated`, `Pilot53` will *remove* the related DNS entry
 
 #### Update
-If you wish to swap an instance, simply create a new instance with the same name as the instance you want to substitute. As the new instance is created, `Pilot53` will first `DELETE` the current DNS entry and create a new one with the updated instance IP. *Pay attention*: if you do that and the new machine isn't ready to be provisioned, the DNS will be anyway swapped. This will cause downtime of your services while the new machine is provisioned.
+If you wish to swap an instance, simply create a new instance with the same `Name` tag. As the new instance is created, `Pilot53` will first `DELETE` the current DNS entry and create a new one with the updated instance IP. *Pay attention*: if you do that and the new machine hasn't yet been provisioned, the DNS will be anyway swapped. This will cause downtime of your services until the new machine is ready.
 
 # Setup
 
@@ -35,7 +35,7 @@ If you wish to swap an instance, simply create a new instance with the same name
 
 4. Copy the content of `index.js` in the `Lambda function code` text area. Make sure to add your `BASE_DOMAIN_NAME` (ex. `opengrid.xyz`) and the `HOSTED_ZONE_ID` from your Route53. Select as `Role` the newly created `IAM role`
 
-3. You need now to bind your lambda function to specific `EC2` events. You can do that in the `CloudWatch` section of your `AWS Console`. Click on `Events` and create a new `rule`. Select `EC2 instance state change notification`, from `specific state` select `Running, Shutting Down and Stopping`. Then add a new `Target` where you will need to select your newly created `lambda function`. Choose a name for your Rule definition and simply create it.
+5. You need now to bind your lambda function to specific `EC2` events. You can do that in the `CloudWatch` section of your `AWS Console`. Click on `Events` and create a new `rule`. Select `EC2 instance state change notification`, from `specific state` select `Running, Shutting Down and Stopping`. Then add a new `Target` where you will need to select your newly created `lambda function`. Choose a name for your Rule definition and simply create it.
 
 If everything went well, you should be good to go.
 
