@@ -14,42 +14,152 @@ exports.handler = function(event, context) {
   var ec2 = new aws.EC2();
   var route53 = new aws.Route53();
 
-  ec2.describeInstances(function(err, result) {
-    if (err) {
-      context.fail(err);
-      return;
-    }
+  if (event.detail.state === 'running') {
+    describeInstance(ec2, event.detail['instance-id'], function(err, instance) {
+      if (err) {
+        return context.fail(err);
+      }
+      domainNameFrom(instance, instance.InstanceId, context, function(err, FQDN) {
+        if (err) {
+          return context.fail(err);
+        }
+        addToRoute53(route53, FQDN, HOSTED_ZONE_ID, instance.PublicIpAddress, function(err) {
+          if (err) {
+            return context.fail(err);
+          }
+          return context.succeed('OK');
+        });
+      });
+    });
+  } else {
+    ec2.describeInstances(function(err, result) {
+      if (err) {
+        context.fail(err);
+        return;
+      }
+      result.Reservations.forEach(function(reservation) {
+        reservation.Instances.forEach(function(instance) {
+          if ((instance.InstanceId) == event.detail['instance-id']) {
+            var id = instance.InstanceId;
+            var ip = instance.PublicIpAddress;
 
+            domainNameFrom(instance, id, context, function(name) {
+              dnsRecordChange = dnsRecordChangeFrom(event, ip, name);
+              route53.changeResourceRecordSets(dnsRecordChange, function(err, data) {
+                if (err) {
+                  context.fail(err);
+                  return;
+                }
+                console.log('Change DNS record: ', JSON.stringify(dnsRecordChange));
+                context.succeed('Changed DNS record');
+              });
+            });
+          }
+        });
+      });
+    });
+  }
+};
+
+function describeInstance(ec2, instanceId, callback) {
+  var params = {InstanceIds: [instanceId]};
+  ec2.describeInstances(params, function(err, result) {
+    if (err) {
+      return callback(err, null);
+    }
     result.Reservations.forEach(function(reservation) {
       reservation.Instances.forEach(function(instance) {
-        if ((instance.InstanceId) == event.detail['instance-id']) {
-          var id = instance.InstanceId;
-          var ip = instance.PublicIpAddress;
-
-          domainNameFrom(instance, id, context, function(name) {
-            dnsRecordChange = dnsRecordChangeFrom(event, ip, name);
-            route53.changeResourceRecordSets(dnsRecordChange, function(err, data) {
-              if (err) {
-                context.fail(err);
-                return;
-              }
-              console.log('Change DNS record: ', JSON.stringify(dnsRecordChange));
-              context.succeed('Changed DNS record');
-            });
-          });
+        if (instance.PublicIpAddress) {
+          return callback(null, instance);
         }
+        setTimeout(function() {
+          console.log('Missing publicIP, try later...');
+          describeInstance(ec2, instanceId, callback)
+        }, 300);
       });
     });
   });
-};
+}
+
+function addToRoute53(route53, FQDN, hostedZoneId, publicIp, callback) {
+  hostedZoneRecord(route53, hostedZoneId, 'A', FQDN, function(err, resourceRecordSet) {
+    if (err) {
+      return callback(err);
+    }
+    var dnsRecordChange = {
+      HostedZoneId: hostedZoneId,
+      ChangeBatch: {
+        Changes: [{
+          Action: 'CREATE',
+          ResourceRecordSet: {
+            Name: FQDN,
+            Type: 'A',
+            ResourceRecords: [{Value: publicIp}],
+            TTL: 60,
+          }
+        }]
+      }
+    };
+    if (resourceRecordSet) {
+      var previousIp = resourceRecordSet.ResourceRecords[0].Value;
+      if (previousIp === publicIp) {
+        console.log('Found A record for', FQDN, 'with current IP', publicIp, 'so nothing to do');
+        return callback(null);
+      }
+      console.log('Found A record for', FQDN, 'with IP', previousIp, 'update to IP', publicIp);
+      dnsRecordChange.ChangeBatch.Changes.unshift({
+        Action: 'DELETE',
+        ResourceRecordSet: {
+          Name: FQDN,
+          Type: 'A',
+          ResourceRecords: [{Value: previousIp}],
+          TTL: 60,
+        }
+      });
+    } else {
+      console.log('Missing A record for', FQDN, 'create with IP', publicIp);
+    }
+    route53.changeResourceRecordSets(dnsRecordChange, function(err, data) {
+      if (err) {
+        return callback(err);
+      }
+      return callback(null);
+    });
+  });
+}
+
+function hostedZoneRecord(route53, hostedZoneId, recordType, FQDN, callback) {
+  FQDN = util.format('%s.', FQDN);
+  var params = {
+    HostedZoneId: hostedZoneId,
+    MaxItems: '1',
+    StartRecordName: FQDN,
+    StartRecordType: recordType
+  };
+  route53.listResourceRecordSets(params, function(err, data) {
+    if (err) {
+      return callback(err);
+    }
+    var resourceRecordSet = data.ResourceRecordSets && data.ResourceRecordSets[0];
+    if (resourceRecordSet && (resourceRecordSet.Name === FQDN)) {
+      return callback(null, resourceRecordSet);
+    }
+    callback(null, null);
+  });
+}
+
 
 function domainNameFrom(instance, id, context, callback) {
+  var domainName = null;
   instance.Tags.forEach(function(tag) {
     if (tag.Key === 'Name') {
-      return callback(util.format('%s.%s', tag.Value, BASE_DOMAIN_NAME));
+      domainName = util.format('%s.%s', tag.Value, BASE_DOMAIN_NAME);
     }
   });
-  context.fail(util.format("Unable to find tag with key 'Name' in instance '%s'", id));
+  if (domainName) {
+    return callback(null, domainName);
+  }
+  callback(util.format("Unable to find tag with key 'Name' in instance '%s'", id), null);
 }
 
 function dnsRecordChangeFrom(event, ip, name) {
