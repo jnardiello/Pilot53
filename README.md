@@ -4,7 +4,7 @@ Automatic DNS for `EC2` instances on `Route53`.
 
 ### Why and How
 
-If you are either an Ops guy or a Dev and you have ever worked in a project/team with more than one server, you have felt the pain of:
+If you have ever worked in a project/team with more than one server, you have felt the pain of:
 - Keeping track of all your servers
 - Distribute and maintain a servers list, maybe with `ssh` aliases
 - Easily access each server as it's up and running
@@ -13,9 +13,19 @@ Pilot53 is a `AWS lambda` function listening to `EC2` events and automatically r
 
 ### Use case
 
-You create a new `EC2` instance with tag `Name: web-1`. `Pilot53` will receive an event from `EC2` as your instance will become `running` and will create the new DNS record. In the end, without ever touching anything all your team will be able to access `web-1` from `web-1.yourdomain.com`
+You create a new `EC2` instance with tag `Name: web-1`. `Pilot53` will receive an event from `EC2` as your instance will become `running` and will create a new DNS record. Your team will be able to access `web-1` from `web-1.yourdomain.com`
 
-## Setup
+## Expected Behaviour
+### Create
+When creating a new instance, `Pilot53` will look for the tag `Name` and will use it to create the DNS entry. A tag called `web-1` will generate the DNS record `web-1.yourdomain.xpz`
+
+### Delete
+As your instance gets `stopped` or `terminated`, `Pilot53` will *remove* the related DNS entry
+
+### Update
+If you wish to swap an instance, simply create a new instance with the same name as the instance you want to substitute. As the new instance is created, `Pilot53` will first `DELETE` the current DNS entry and create a new one with the updated instance IP. *Pay attention*: if you do that and the new machine isn't ready to be provisioned, the DNS will be anyway swapped. This will cause downtime of your services while the new machine is provisioned.
+
+# Setup
 
 1. Create a new `Hostedzone` in `Route53`. This is where your DNS domain will live. Note down the `Hosted Zone ID`.
 
@@ -27,17 +37,7 @@ You create a new `EC2` instance with tag `Name: web-1`. `Pilot53` will receive a
 
 3. You need now to bind your lambda function to specific `EC2` events. You can do that in the `CloudWatch` section of your `AWS Console`. Click on `Events` and create a new `rule`. Select `EC2 instance state change notification`, from `specific state` select `Running, Shutting Down and Stopping`. Then add a new `Target` where you will need to select your newly created `lambda function`. Choose a name for your Rule definition and simply create it.
 
-You should be good to go.
-
-## Expected Behaviour
-### Create
-When creating a new instance, `Pilot53` will look for the tag `Name` and will use it to create the DNS entry. A tag called `web-1` will generate the DNS record `web-1.yourdomain.xpz`
-
-### Delete
-As your instance gets `stopped` or `terminated`, `Pilot53` will *remove* the related DNS entry
-
-### Update
-If you wish to swap an instance, simply create a new instance with the same name as the instance you want to substitute. As the new instance is created, `Pilot53` will first `DELETE` the current DNS entry and create a new one with the updated instance IP. *Pay attention*: if you do that and the new machine isn't ready to be provisioned, the DNS will be anyway swapped. This will cause downtime of your services while the new machine is provisioned.
+If everything went well, you should be good to go.
 
 ## Credits
 This project was developed after a hint and idea from [pracucci](https://github.com/pracucci) and [Spreaker](http://spreaker.com).  
