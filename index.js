@@ -113,12 +113,13 @@ function addOrUpdateInRoute53(route53, FQDN, hostedZoneId, publicIp, callback) {
         }
       });
     } else {
-      console.log('Missing A record for', FQDN, 'create with IP', publicIp);
+      console.log('Missing A record for', FQDN);
     }
     route53.changeResourceRecordSets(dnsRecordChange, function(err, data) {
       if (err) {
         return callback(err);
       }
+      console.log('Created A record for', FQDN, 'with IP', publicIp);
       return callback(null);
     });
   });
@@ -151,6 +152,7 @@ function removeFromRoute53(route53, FQDN, hostedZoneId, callback) {
       if (err) {
         return callback(err);
       }
+      console.log('Removed A record for', FQDN);
       return callback(null);
     });
   });
