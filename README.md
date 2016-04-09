@@ -39,6 +39,8 @@ If you wish to swap an instance, simply create a new instance with the same name
 
 If everything went well, you should be good to go.
 
+*Note*: You can add your `base_domain` to your `Search Domains` to be able to simply (for example) do `ssh <newly-created-instance-name>`
+
 ## Credits
 This project was developed after a hint and idea from [pracucci](https://github.com/pracucci) and [Spreaker](http://spreaker.com).  
 Thanks to [gabrielelana](https://github.com/pracucci) for co-authoring this project during the amazing sessions of the Open Source Saturday.  
