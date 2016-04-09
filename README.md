@@ -40,5 +40,5 @@ As your instance gets `stopped` or `terminated`, `Pilot53` will *remove* the rel
 If you wish to swap an instance, simply create a new instance with the same name as the instance you want to substitute. As the new instance is created, `Pilot53` will first `DELETE` the current DNS entry and create a new one with the updated instance IP. *Pay attention*: if you do that and the new machine isn't ready to be provisioned, the DNS will be anyway swapped. This will cause downtime of your services while the new machine is provisioned.
 
 ## Credits
-This project was developed after a hint from (pracucci)[https://github.com/pracucci].  
-Thanks to (gabrielelana)[https://github.com/pracucci] for co-authoring this project during the amazing sessions of the Open Source Saturday
+This project was developed after a hint from [pracucci](https://github.com/pracucci).  
+Thanks to [gabrielelana](https://github.com/pracucci) for co-authoring this project during the amazing sessions of the Open Source Saturday
