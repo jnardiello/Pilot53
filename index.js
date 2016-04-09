@@ -23,7 +23,7 @@ exports.handler = function(event, context) {
         if (err) {
           return context.fail(err);
         }
-        addToRoute53(route53, FQDN, HOSTED_ZONE_ID, instance.PublicIpAddress, function(err) {
+        addOrUpdateInRoute53(route53, FQDN, HOSTED_ZONE_ID, instance.PublicIpAddress, function(err) {
           if (err) {
             return context.fail(err);
           }
@@ -31,7 +31,8 @@ exports.handler = function(event, context) {
         });
       });
     });
-  } else {
+  }
+  if (event.detail.state === 'shutting-down' || event.detail.state === 'stopping') {
     ec2.describeInstances(function(err, result) {
       if (err) {
         context.fail(err);
@@ -39,22 +40,17 @@ exports.handler = function(event, context) {
       }
       result.Reservations.forEach(function(reservation) {
         reservation.Instances.forEach(function(instance) {
-          if ((instance.InstanceId) == event.detail['instance-id']) {
-            var id = instance.InstanceId;
-            var ip = instance.PublicIpAddress;
-
-            domainNameFrom(instance, id, context, function(name) {
-              dnsRecordChange = dnsRecordChangeFrom(event, ip, name);
-              route53.changeResourceRecordSets(dnsRecordChange, function(err, data) {
-                if (err) {
-                  context.fail(err);
-                  return;
-                }
-                console.log('Change DNS record: ', JSON.stringify(dnsRecordChange));
-                context.succeed('Changed DNS record');
-              });
+          domainNameFrom(instance, instance.InstanceId, context, function(err, FQDN) {
+            if (err) {
+              return context.fail(err);
+            }
+            removeFromRoute53(route53, FQDN, HOSTED_ZONE_ID, function(err) {
+              if (err) {
+                return context.fail(err);
+              }
+              return context.succeed('OK');
             });
-          }
+          });
         });
       });
     });
@@ -81,7 +77,7 @@ function describeInstance(ec2, instanceId, callback) {
   });
 }
 
-function addToRoute53(route53, FQDN, hostedZoneId, publicIp, callback) {
+function addOrUpdateInRoute53(route53, FQDN, hostedZoneId, publicIp, callback) {
   hostedZoneRecord(route53, hostedZoneId, 'A', FQDN, function(err, resourceRecordSet) {
     if (err) {
       return callback(err);
@@ -119,6 +115,38 @@ function addToRoute53(route53, FQDN, hostedZoneId, publicIp, callback) {
     } else {
       console.log('Missing A record for', FQDN, 'create with IP', publicIp);
     }
+    route53.changeResourceRecordSets(dnsRecordChange, function(err, data) {
+      if (err) {
+        return callback(err);
+      }
+      return callback(null);
+    });
+  });
+}
+
+function removeFromRoute53(route53, FQDN, hostedZoneId, callback) {
+  hostedZoneRecord(route53, hostedZoneId, 'A', FQDN, function(err, resourceRecordSet) {
+    if (err) {
+      return callback(err);
+    }
+    if (!resourceRecordSet) {
+      console.log('Not found A record for', FQDN, 'so nothing to do');
+      return callback(null);
+    }
+    var dnsRecordChange = {
+      HostedZoneId: hostedZoneId,
+      ChangeBatch: {
+        Changes: [{
+          Action: 'DELETE',
+          ResourceRecordSet: {
+            Name: FQDN,
+            Type: 'A',
+            ResourceRecords: resourceRecordSet.ResourceRecords,
+            TTL: 60,
+          }
+        }]
+      }
+    };
     route53.changeResourceRecordSets(dnsRecordChange, function(err, data) {
       if (err) {
         return callback(err);
