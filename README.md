@@ -1,6 +1,6 @@
 # Pilot53
 
-`Pilot53` will create a new `Route53` DNS record as you create new `EC2` instances. It's the easiest way to handle multiple servers.
+Automatic DNS for `EC2` instances on `Route53`.
 
 ### Why and How
 
@@ -9,7 +9,7 @@ If you are either an Ops guy or a Dev and you have ever worked in a project/team
 - Distribute and maintain a servers list, maybe with `ssh` aliases
 - Easily access each server as it's up and running
 
-Pilot53 is a `AWS lambda` function listening to `EC2` events and automatically registering new servers to a `Route53`
+Pilot53 is a `AWS lambda` function listening to `EC2` events and automatically registering new servers to a `Route53` based on their `Name` tag.
 
 ### Use case
 
