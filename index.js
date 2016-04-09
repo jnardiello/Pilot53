@@ -1,14 +1,14 @@
-AWS_ACCESS_ID = '<AWS_ACCESS_ID>';
-AWS_ACCESS_KEY = '<AWS_ACCESS_KEY>';
-AWS_REGION = '<AWS_REGION>';
+AWS_ACCESS_ID = '<AWS_ACCESS_ID>'; // OPTIONAL
+AWS_ACCESS_KEY = '<AWS_ACCESS_KEY>'; // OPTIONAL
+AWS_REGION = '<AWS_REGION>'; // OPTIONAL
 
 BASE_DOMAIN_NAME = '<DOMAIN_NAME>';
 HOSTED_ZONE_ID = '<HOSTED_ZONE_ID>';
 
 var util = require('util');
 var aws = require('aws-sdk');
-aws.config.update({accessKeyId: AWS_ACCESS_ID, secretAccessKey: AWS_ACCESS_KEY});
-aws.config.update({region: AWS_REGION});
+aws.config.update({accessKeyId: AWS_ACCESS_ID, secretAccessKey: AWS_ACCESS_KEY}); // OPTIONAL
+aws.config.update({region: AWS_REGION}); // OPTIONAL
 
 exports.handler = function(event, context) {
   var ec2 = new aws.EC2();
