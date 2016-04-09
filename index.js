@@ -191,35 +191,3 @@ function domainNameFrom(instance, id, context, callback) {
   }
   callback(util.format("Unable to find tag with key 'Name' in instance '%s'", id), null);
 }
-
-function dnsRecordChangeFrom(event, ip, name) {
-  if (event.detail.state === 'stopping' || event.detail.state === 'shutting-down') {
-    return deleteDnsRecord(ip, name);
-  }
-  return createDnsRecord(ip, name);
-}
-
-function deleteDnsRecord(ip, name) {
-  return dnsRecord('DELETE', ip, name);
-}
-
-function createDnsRecord(ip, name) {
-  return dnsRecord('CREATE', ip, name);
-}
-
-function dnsRecord(action, ip, name) {
-  return {
-    HostedZoneId: HOSTED_ZONE_ID,
-    ChangeBatch: {
-      Changes: [{
-        Action: action,
-        ResourceRecordSet: {
-          Name: name,
-          Type: 'A',
-          ResourceRecords: [{Value: ip}],
-          TTL: 600,
-        }
-      }]
-    }
-  };
-}
