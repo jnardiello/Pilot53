@@ -43,5 +43,5 @@ If everything went well, you should be good to go.
 
 ## Credits
 This project was developed after a hint and idea from [pracucci](https://github.com/pracucci) and [Spreaker](http://spreaker.com).  
-Thanks to [gabrielelana](https://github.com/pracucci) for co-authoring this project during the amazing sessions of the Open Source Saturday.  
-The project was developed during the [Open Source Saturday](http://www.meetup.com/Open-Source-Saturday-Milano/)
+Thanks to [gabrielelana](https://github.com/pracucci) for co-authoring/contributing.
+The project was developed during the [Open Source Saturday](http://www.meetup.com/Open-Source-Saturday-Milano/). If you live in Milan, you should check it out.
