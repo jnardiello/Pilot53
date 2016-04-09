@@ -15,14 +15,14 @@ Pilot53 is a `AWS lambda` function listening to `EC2` events and automatically r
 
 You create a new `EC2` instance with tag `Name: web-1`. `Pilot53` will receive an event from `EC2` as your instance will become `running` and will create a new DNS record. Your team will be able to access `web-1` from `web-1.yourdomain.com`
 
-## Expected Behaviour
-### Create
+### Expected Behaviour
+#### Create
 When creating a new instance, `Pilot53` will look for the tag `Name` and will use it to create the DNS entry. A tag called `web-1` will generate the DNS record `web-1.yourdomain.xpz`
 
-### Delete
+#### Delete
 As your instance gets `stopped` or `terminated`, `Pilot53` will *remove* the related DNS entry
 
-### Update
+#### Update
 If you wish to swap an instance, simply create a new instance with the same name as the instance you want to substitute. As the new instance is created, `Pilot53` will first `DELETE` the current DNS entry and create a new one with the updated instance IP. *Pay attention*: if you do that and the new machine isn't ready to be provisioned, the DNS will be anyway swapped. This will cause downtime of your services while the new machine is provisioned.
 
 # Setup
