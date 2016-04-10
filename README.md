@@ -9,7 +9,7 @@ If you have ever worked in a project/team with more than one server, you have fe
 - Distribute and maintain a servers list, maybe with `ssh` aliases
 - Easily access each server as it's up and running
 
-Pilot53 is a `AWS lambda` function listening to `EC2` events and automatically registering new servers to a `Route53` based on their `Name` tag.
+Pilot53 is a `AWS lambda` function listening to `EC2` events and automatically registering new servers to `Route53` based on their `Name` tag.
 
 ### Use case
 
