@@ -13,7 +13,7 @@ Pilot53 is a `AWS lambda` function listening to `EC2` events and automatically r
 
 ### Use case
 
-You create a new `EC2` instance with tag `Name: web-1`. `Pilot53` will receive an event from `EC2` as your instance will become `running` and will create a new DNS record. Your team will be able to access `web-1` from `web-1.yourdomain.com`
+You create a new `EC2` instance with tag `Name: web-1`. `Pilot53` will receive an event from `EC2` as your instance will become `running` and will create a new DNS record. Your team will be able to access `web-1` from `web-1.yourdomain.com` after adding `yourdomain.com` to their local DNS search lists.
 
 ### Expected Behaviour
 #### Create
@@ -43,5 +43,5 @@ If everything went well, you should be good to go.
 
 ## Credits
 This project was developed after a hint/idea from [pracucci](https://github.com/pracucci)  
-Thanks to [gabrielelana](https://github.com/pracucci) for co-authoring/contributing.  
+Thanks to [gabrielelana](https://github.com/gabrielelana) for co-authoring/contributing.  
 The project was developed during the [Open Source Saturday](http://www.meetup.com/Open-Source-Saturday-Milano/). If you live in Milan, you should check it out.
