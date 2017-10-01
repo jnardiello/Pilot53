@@ -2,6 +2,10 @@
 
 Automatic DNS for `EC2` instances on `Route53`.
 
+### Status
+
+This project is in alpha stage with no stable release. It is currently a really good example from which you can take inspiration orbase further developments, do **not** try to use in production as it is.
+
 ### Why and How
 
 If you have ever worked in a project/team with more than one server, you have felt the pain of:
